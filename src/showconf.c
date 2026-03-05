@@ -33,10 +33,11 @@ static const char *masked_base64_key(const uint8_t key[static WG_KEY_LEN])
 int showconf_main(int argc, const char *argv[])
 {
 	char base64[WG_KEY_LEN_BASE64];
-	char ip[INET6_ADDRSTRLEN];
 	struct wgdevice *device = NULL;
 	struct wgpeer *peer;
-	struct wgallowedip *allowedip;
+	FILE *out = NULL;
+	char *out_buf = NULL;
+	size_t out_size = 0;
 	int ret = 1;
 
 	if (argc != 2) {
@@ -44,76 +45,90 @@ int showconf_main(int argc, const char *argv[])
 		return 1;
 	}
 
+	out = open_memstream(&out_buf, &out_size);
+	if (!out) {
+		perror("open_memstream");
+		goto cleanup;
+	}
+
 	if (ipc_get_device(&device, argv[1])) {
 		perror("Unable to access interface");
 		goto cleanup;
 	}
 
-	printf("[Interface]\n");
+	fprintf(out, "[Interface]\n");
 	if (device->listen_port)
-		printf("ListenPort = %u\n", device->listen_port);
+		fprintf(out, "ListenPort = %u\n", device->listen_port);
 	if (device->fwmark)
-		printf("FwMark = 0x%x\n", device->fwmark);
+		fprintf(out, "FwMark = 0x%x\n", device->fwmark);
 	if (device->flags & WGDEVICE_HAS_PRIVATE_KEY)
-		printf("PrivateKey = %s\n", masked_base64_key(device->private_key));
+		fprintf(out, "PrivateKey = %s\n", masked_base64_key(device->private_key));
 	if (device->flags & WGDEVICE_HAS_JC)
-		printf("Jc = %u\n", device->junk_packet_count);
+		fprintf(out, "Jc = %u\n", device->junk_packet_count);
 	if (device->flags & WGDEVICE_HAS_JMIN)
-		printf("Jmin = %u\n", device->junk_packet_min_size);
+		fprintf(out, "Jmin = %u\n", device->junk_packet_min_size);
 	if (device->flags & WGDEVICE_HAS_JMAX)
-		printf("Jmax = %u\n", device->junk_packet_max_size);
+		fprintf(out, "Jmax = %u\n", device->junk_packet_max_size);
 	if (device->flags & WGDEVICE_HAS_S1)
-		printf("S1 = %u\n", device->init_packet_junk_size);
+		fprintf(out, "S1 = %u\n", device->init_packet_junk_size);
 	if (device->flags & WGDEVICE_HAS_S2)
-		printf("S2 = %u\n", device->response_packet_junk_size);
+		fprintf(out, "S2 = %u\n", device->response_packet_junk_size);
 	if (device->flags & WGDEVICE_HAS_S3)
-		printf("S3 = %u\n", device->cookie_reply_packet_junk_size);
+		fprintf(out, "S3 = %u\n", device->cookie_reply_packet_junk_size);
 	if (device->flags & WGDEVICE_HAS_S4)
-		printf("S4 = %u\n", device->transport_packet_junk_size);
+		fprintf(out, "S4 = %u\n", device->transport_packet_junk_size);
 	if (device->flags & WGDEVICE_HAS_H1)
-		printf("H1 = %s\n", device->init_packet_magic_header);
+		fprintf(out, "H1 = %s\n", device->init_packet_magic_header);
 	if (device->flags & WGDEVICE_HAS_H2)
-		printf("H2 = %s\n", device->response_packet_magic_header);
+		fprintf(out, "H2 = %s\n", device->response_packet_magic_header);
 	if (device->flags & WGDEVICE_HAS_H3)
-		printf("H3 = %s\n", device->underload_packet_magic_header);
+		fprintf(out, "H3 = %s\n", device->underload_packet_magic_header);
 	if (device->flags & WGDEVICE_HAS_H4)
-		printf("H4 = %s\n", device->transport_packet_magic_header);
+		fprintf(out, "H4 = %s\n", device->transport_packet_magic_header);
 	if (device->flags & WGDEVICE_HAS_I1)
-		printf("I1 = %s\n", device->i1);
+		fprintf(out, "I1 = %s\n", device->i1);
 	if (device->flags & WGDEVICE_HAS_I2)
-		printf("I2 = %s\n", device->i2);
+		fprintf(out, "I2 = %s\n", device->i2);
 	if (device->flags & WGDEVICE_HAS_I3)
-		printf("I3 = %s\n", device->i3);
+		fprintf(out, "I3 = %s\n", device->i3);
 	if (device->flags & WGDEVICE_HAS_I4)
-		printf("I4 = %s\n", device->i4);
+		fprintf(out, "I4 = %s\n", device->i4);
 	if (device->flags & WGDEVICE_HAS_I5)
-		printf("I5 = %s\n", device->i5);
+		fprintf(out, "I5 = %s\n", device->i5);
 
-	printf("\n");
+	fprintf(out, "\n");
 	for_each_wgpeer(device, peer) {
 		key_to_base64(base64, peer->public_key);
-		printf("[Peer]\nPublicKey = %s\n", base64);
+		fprintf(out, "[Peer]\nPublicKey = %s\n", base64);
 		if (peer->flags & WGPEER_HAS_PRESHARED_KEY) {
-			printf("PresharedKey = %s\n", masked_base64_key(peer->preshared_key));
+			fprintf(out, "PresharedKey = %s\n", masked_base64_key(peer->preshared_key));
 		}
 		if (peer->flags & WGPEER_HAS_AWG) {
-			printf("AdvancedSecurity = %s\n", peer->awg ? "on" : "off");
+			fprintf(out, "AdvancedSecurity = %s\n", peer->awg ? "on" : "off");
 		}
 		if (peer->first_allowedip)
-			printf("AllowedIPs = (hidden)\n");
+			fprintf(out, "AllowedIPs = (hidden)\n");
 
 		if (peer->endpoint.addr.sa_family == AF_INET || peer->endpoint.addr.sa_family == AF_INET6)
-			printf("Endpoint = (hidden)\n");
+			fprintf(out, "Endpoint = (hidden)\n");
 
 		if (peer->persistent_keepalive_interval)
-			printf("PersistentKeepalive = %u\n", peer->persistent_keepalive_interval);
+			fprintf(out, "PersistentKeepalive = %u\n", peer->persistent_keepalive_interval);
 
 		if (peer->next_peer)
-			printf("\n");
+			fprintf(out, "\n");
 	}
 	ret = 0;
 
 cleanup:
+	if (out) {
+		fflush(out);
+		fclose(out);
+	}
+	if (!ret && out_buf && out_size) {
+		fwrite(out_buf, 1, out_size, stdout);
+	}
+	free(out_buf);
 	free_wgdevice(device);
 	return ret;
 }
