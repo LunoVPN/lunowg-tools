@@ -262,7 +262,7 @@ static void pretty_print(struct wgdevice *device)
 		if (peer->flags & WGPEER_HAS_PRESHARED_KEY)
 			terminal_printf("  " TERMINAL_BOLD "preshared key" TERMINAL_RESET ": %s\n", masked_key(peer->preshared_key));
 		if (peer->endpoint.addr.sa_family == AF_INET || peer->endpoint.addr.sa_family == AF_INET6)
-			terminal_printf("  " TERMINAL_BOLD "endpoint" TERMINAL_RESET ": %s\n", endpoint(&peer->endpoint.addr));
+			terminal_printf("  " TERMINAL_BOLD "endpoint" TERMINAL_RESET ": (hidden)\n");
 		terminal_printf("  " TERMINAL_BOLD "allowed ips" TERMINAL_RESET ": ");
 		if (peer->first_allowedip) {
 			for_each_wgallowedip(peer, allowedip)
@@ -271,11 +271,6 @@ static void pretty_print(struct wgdevice *device)
 			terminal_printf("(none)\n");
 		if (peer->last_handshake_time.tv_sec)
 			terminal_printf("  " TERMINAL_BOLD "latest handshake" TERMINAL_RESET ": %s\n", ago(&peer->last_handshake_time));
-		if (peer->rx_bytes || peer->tx_bytes) {
-			terminal_printf("  " TERMINAL_BOLD "transfer" TERMINAL_RESET ": ");
-			terminal_printf("%s received, ", bytes(peer->rx_bytes));
-			terminal_printf("%s sent\n", bytes(peer->tx_bytes));
-		}
 		if (peer->persistent_keepalive_interval)
 			terminal_printf("  " TERMINAL_BOLD "persistent keepalive" TERMINAL_RESET ": %s\n", every(peer->persistent_keepalive_interval));
 		if (peer->next_peer)
