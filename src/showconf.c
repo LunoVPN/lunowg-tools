@@ -18,6 +18,18 @@
 #include "ipc.h"
 #include "subcommands.h"
 
+static const char *masked_base64_key(const uint8_t key[static WG_KEY_LEN])
+{
+	static char base64[WG_KEY_LEN_BASE64];
+	const char *var = getenv("WG_HIDE_KEYS");
+
+	if (var && !strcmp(var, "never")) {
+		key_to_base64(base64, key);
+		return base64;
+	}
+	return "(hidden)";
+}
+
 int showconf_main(int argc, const char *argv[])
 {
 	char base64[WG_KEY_LEN_BASE64];
@@ -42,10 +54,8 @@ int showconf_main(int argc, const char *argv[])
 		printf("ListenPort = %u\n", device->listen_port);
 	if (device->fwmark)
 		printf("FwMark = 0x%x\n", device->fwmark);
-	if (device->flags & WGDEVICE_HAS_PRIVATE_KEY) {
-		key_to_base64(base64, device->private_key);
-		printf("PrivateKey = %s\n", base64);
-	}
+	if (device->flags & WGDEVICE_HAS_PRIVATE_KEY)
+		printf("PrivateKey = %s\n", masked_base64_key(device->private_key));
 	if (device->flags & WGDEVICE_HAS_JC)
 		printf("Jc = %u\n", device->junk_packet_count);
 	if (device->flags & WGDEVICE_HAS_JMIN)
@@ -84,46 +94,16 @@ int showconf_main(int argc, const char *argv[])
 		key_to_base64(base64, peer->public_key);
 		printf("[Peer]\nPublicKey = %s\n", base64);
 		if (peer->flags & WGPEER_HAS_PRESHARED_KEY) {
-			key_to_base64(base64, peer->preshared_key);
-			printf("PresharedKey = %s\n", base64);
+			printf("PresharedKey = %s\n", masked_base64_key(peer->preshared_key));
 		}
 		if (peer->flags & WGPEER_HAS_AWG) {
 			printf("AdvancedSecurity = %s\n", peer->awg ? "on" : "off");
 		}
 		if (peer->first_allowedip)
-			printf("AllowedIPs = ");
-		for_each_wgallowedip(peer, allowedip) {
-			if (allowedip->family == AF_INET) {
-				if (!inet_ntop(AF_INET, &allowedip->ip4, ip, INET6_ADDRSTRLEN))
-					continue;
-			} else if (allowedip->family == AF_INET6) {
-				if (!inet_ntop(AF_INET6, &allowedip->ip6, ip, INET6_ADDRSTRLEN))
-					continue;
-			} else
-				continue;
-			printf("%s/%d", ip, allowedip->cidr);
-			if (allowedip->next_allowedip)
-				printf(", ");
-		}
-		if (peer->first_allowedip)
-			printf("\n");
+			printf("AllowedIPs = (hidden)\n");
 
-		if (peer->endpoint.addr.sa_family == AF_INET || peer->endpoint.addr.sa_family == AF_INET6) {
-			char host[4096 + 1];
-			char service[512 + 1];
-			socklen_t addr_len = 0;
-
-			if (peer->endpoint.addr.sa_family == AF_INET)
-				addr_len = sizeof(struct sockaddr_in);
-			else if (peer->endpoint.addr.sa_family == AF_INET6)
-				addr_len = sizeof(struct sockaddr_in6);
-			if (!getnameinfo(&peer->endpoint.addr, addr_len, host, sizeof(host), service, sizeof(service), NI_DGRAM | NI_NUMERICSERV | NI_NUMERICHOST)) {
-				if (peer->endpoint.addr.sa_family == AF_INET6 && strchr(host, ':'))
-					printf("Endpoint = [%s]:%s\n", host, service);
-				else
-					printf("Endpoint = %s:%s\n", host, service);
-			}
-		}
+		if (peer->endpoint.addr.sa_family == AF_INET || peer->endpoint.addr.sa_family == AF_INET6)
+			printf("Endpoint = (hidden)\n");
 
 		if (peer->persistent_keepalive_interval)
 			printf("PersistentKeepalive = %u\n", peer->persistent_keepalive_interval);
