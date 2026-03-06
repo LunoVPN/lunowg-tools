@@ -18,5 +18,13 @@ ExecStop=/usr/bin/lwg-quick down %i
 ExecReload=/bin/bash -c 'exec /usr/bin/lwg syncconf %i <(exec /usr/bin/lwg-quick strip %i)'
 Environment=WG_ENDPOINT_RESOLUTION_RETRIES=infinity
 
+ProtectSystem=full
+PrivateTmp=yes
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+AmbientCapabilities=CAP_IPC_LOCK
+ProtectHome=read-only
+PrivateDevices=yes
+NoNewPrivileges=yes
+
 [Install]
 WantedBy=multi-user.target
