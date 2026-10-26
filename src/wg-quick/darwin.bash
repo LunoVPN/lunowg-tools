@@ -112,7 +112,7 @@ get_real_interface() {
 	[[ -f "/var/run/lunovpn/$INTERFACE.name" ]] || return 1
 	interface="$(< "/var/run/lunovpn/$INTERFACE.name")"
 	[[ -n $interface && -S "/var/run/lunovpn/$interface.sock" ]] || return 1
-	diff=$(( $(stat -f %m "/var/run/lunovpn/$interface.sock" 2>/dev/null || echo 200) - $(stat -f %m "/var/run/wireguard/$INTERFACE.name" 2>/dev/null || echo 100) ))
+	diff=$(( $(stat -f %m "/var/run/lunovpn/$interface.sock" 2>/dev/null || echo 200) - $(stat -f %m "/var/run/lunovpn/$INTERFACE.name" 2>/dev/null || echo 100) ))
 	[[ $diff -ge 2 || $diff -le -2 ]] && return 1
 	REAL_INTERFACE="$interface"
 	echo "[+] Interface for $INTERFACE is $REAL_INTERFACE" >&2
@@ -152,8 +152,8 @@ del_routes() {
 }
 
 del_if() {
-	[[ -z $REAL_INTERFACE ]] || cmd rm -f "/var/run/wireguard/$REAL_INTERFACE.sock"
-	cmd rm -f "/var/run/wireguard/$INTERFACE.name"
+	[[ -z $REAL_INTERFACE ]] || cmd rm -f "/var/run/lunovpn/$REAL_INTERFACE.sock"
+	cmd rm -f "/var/run/lunovpn/$INTERFACE.name"
 }
 
 up_if() {
