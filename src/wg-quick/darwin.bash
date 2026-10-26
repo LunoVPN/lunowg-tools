@@ -108,7 +108,7 @@ auto_su() {
 
 get_real_interface() {
 	local interface diff
-	wg show interfaces >/dev/null
+	lwg show interfaces >/dev/null
 	[[ -f "/var/run/lunovpn/$INTERFACE.name" ]] || return 1
 	interface="$(< "/var/run/lunovpn/$INTERFACE.name")"
 	[[ -n $interface && -S "/var/run/lunovpn/$interface.sock" ]] || return 1
@@ -211,7 +211,7 @@ collect_endpoints() {
 	while read -r _ endpoint; do
 		[[ $endpoint =~ ^\[?([a-z0-9:.]+)\]?:[0-9]+$ ]] || continue
 		ENDPOINTS+=( "${BASH_REMATCH[1]}" )
-	done < <(wg show "$REAL_INTERFACE" endpoints)
+	done < <(lwg show "$REAL_INTERFACE" endpoints)
 }
 
 declare -A SERVICE_DNS
@@ -368,7 +368,7 @@ add_route() {
 }
 
 set_config() {
-	cmd wg setconf "$REAL_INTERFACE" <(echo "$WG_CONFIG")
+	cmd lwg setconf "$REAL_INTERFACE" <(echo "$WG_CONFIG")
 }
 
 save_config() {
@@ -398,7 +398,7 @@ save_config() {
 	done
 	old_umask="$(umask)"
 	umask 077
-	current_config="$(cmd wg showconf "$REAL_INTERFACE")"
+	current_config="$(cmd lwg showconf "$REAL_INTERFACE")"
 	trap 'rm -f "$CONFIG_FILE.tmp"; exit' INT TERM EXIT
 	echo "${current_config/\[Interface\]$'\n'/$new_config}" > "$CONFIG_FILE.tmp" || die "Could not write configuration file"
 	sync "$CONFIG_FILE.tmp"
@@ -425,7 +425,7 @@ cmd_usage() {
 	  followed by \`.conf'. Otherwise, INTERFACE is an interface name, with
 	  configuration found at:
 	  ${CONFIG_SEARCH_PATHS[@]/%//INTERFACE.conf}.
-	  It is to be readable by wg(8)'s \`setconf' sub-command, with the exception
+	  It is to be readable by lwg(8)'s \`setconf' sub-command, with the exception
 	  of the following additions to the [Interface] section, which are handled
 	  by $PROGRAM:
 
@@ -443,7 +443,7 @@ cmd_usage() {
 	  - SaveConfig: if set to \`true', the configuration is saved from the current
 	    state of the interface upon shutdown.
 
-	See wg-quick(8) for more info and examples.
+	See lwg-quick(8) for more info and examples.
 	_EOF
 }
 
@@ -459,7 +459,7 @@ cmd_up() {
 	done
 	set_mtu
 	up_if
-	for i in $(while read -r _ i; do for i in $i; do [[ $i =~ ^[0-9a-z:.]+/[0-9]+$ ]] && echo "$i"; done; done < <(wg show "$REAL_INTERFACE" allowed-ips) | sort -nr -k 2 -t /); do
+	for i in $(while read -r _ i; do for i in $i; do [[ $i =~ ^[0-9a-z:.]+/[0-9]+$ ]] && echo "$i"; done; done < <(lwg show "$REAL_INTERFACE" allowed-ips) | sort -nr -k 2 -t /); do
 		add_route "$i"
 	done
 	[[ $AUTO_ROUTE4 -eq 1 || $AUTO_ROUTE6 -eq 1 ]] && set_endpoint_direct_route
@@ -470,7 +470,7 @@ cmd_up() {
 }
 
 cmd_down() {
-	if ! get_real_interface || [[ " $(wg show interfaces) " != *" $REAL_INTERFACE "* ]]; then
+	if ! get_real_interface || [[ " $(lwg show interfaces) " != *" $REAL_INTERFACE "* ]]; then
 		die "\`$INTERFACE' is not a WireGuard interface"
 	fi
 	execute_hooks "${PRE_DOWN[@]}"
@@ -480,7 +480,7 @@ cmd_down() {
 }
 
 cmd_save() {
-	if ! get_real_interface || [[ " $(wg show interfaces) " != *" $REAL_INTERFACE "* ]]; then
+	if ! get_real_interface || [[ " $(lwg show interfaces) " != *" $REAL_INTERFACE "* ]]; then
 		die "\`$INTERFACE' is not a WireGuard interface"
 	fi
 	save_config
