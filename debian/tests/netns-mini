@@ -37,19 +37,19 @@ pp ip netns add $netns0
 pp ip netns add $netns1
 pp ip netns add $netns2
 ip0 link set up dev lo
-ip0 link add dev wg0 type wireguard
+ip0 link add dev wg0 type lunovpn
 ip0 link set wg0 netns $netns1
-ip0 link add dev wg0 type wireguard
+ip0 link add dev wg0 type lunovpn
 ip0 link set wg0 netns $netns2
 ip1 addr add 192.168.241.1/24 dev wg0
 ip2 addr add 192.168.241.2/24 dev wg0
-key1="$(pp wg genkey)"
-key2="$(pp wg genkey)"
-pub1="$(pp wg pubkey <<<"$key1")"
-pub2="$(pp wg pubkey <<<"$key2")"
-n1 wg set wg0 private-key <(echo "$key1") listen-port 1 peer "$pub2" allowed-ips 192.168.241.2/32
-n2 wg set wg0 private-key <(echo "$key2") listen-port 2 peer "$pub1" allowed-ips 192.168.241.1/32
+key1="$(pp lwg genkey)"
+key2="$(pp lwg genkey)"
+pub1="$(pp lwg pubkey <<<"$key1")"
+pub2="$(pp lwg pubkey <<<"$key2")"
+n1 lwg set wg0 private-key <(echo "$key1") listen-port 1 peer "$pub2" allowed-ips 192.168.241.2/32
+n2 lwg set wg0 private-key <(echo "$key2") listen-port 2 peer "$pub1" allowed-ips 192.168.241.1/32
 ip1 link set up dev wg0
 ip2 link set up dev wg0
-n2 wg set wg0 peer "$pub1" endpoint 127.0.0.1:1
+n2 lwg set wg0 peer "$pub1" endpoint 127.0.0.1:1
 n2 ping -c 10 -f -W 1 192.168.241.1
