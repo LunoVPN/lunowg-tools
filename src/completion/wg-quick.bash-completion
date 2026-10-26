@@ -3,12 +3,12 @@
 
 _awg_quick_completion() {
 	local p i a search_paths old_glob
-	search_paths=( /etc/wireguard )
+	search_paths=( /etc/lunovpn/wg )
 
 	old_glob="$(shopt -p nullglob)"
 	shopt -s nullglob
 
-	[[ $OSTYPE == *freebsd* || $OSTYPE == *darwin* ]] && search_paths+=( /usr/local/etc/wireguard )
+	[[ $OSTYPE == *freebsd* || $OSTYPE == *darwin* ]] && search_paths+=( /usr/local/etc/lunovpn/wg )
 
 	if [[ $COMP_CWORD -eq 1 ]]; then
 		COMPREPLY+=( $(compgen -W "up down" -- "${COMP_WORDS[1]}") )
@@ -27,13 +27,13 @@ _awg_quick_completion() {
 			COMPREPLY+=( "${a[@]}" )
 		elif [[ ${COMP_WORDS[1]} == down ]]; then
 			if [[ $OSTYPE == *openbsd* || $OSTYPE == *darwin* ]]; then
-				for i in /var/run/amneziawg/*.name; do
+				for i in /var/run/lunovpn/*.name; do
 					i="${i##*/}"; i="${i%.name}"
 					mapfile -t a < <(compgen -W "$i" -- "${COMP_WORDS[2]}")
 					COMPREPLY+=( "${a[@]}" )
 				done
 			else
-				COMPREPLY+=( $(compgen -W "$(wg show interfaces)" -- "${COMP_WORDS[2]}") )
+				COMPREPLY+=( $(compgen -W "$(lwg show interfaces)" -- "${COMP_WORDS[2]}") )
 			fi
 		fi
 	fi

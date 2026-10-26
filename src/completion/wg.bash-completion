@@ -17,7 +17,7 @@ _awg_completion() {
 	if [[ $COMP_CWORD -eq 2 ]]; then
 		local extra
 		[[ ${COMP_WORDS[1]} == show ]] && extra=" all interfaces"
-		COMPREPLY+=( $(compgen -W "$(wg show interfaces 2>/dev/null)$extra" -- "${COMP_WORDS[2]}") )
+		COMPREPLY+=( $(compgen -W "$(lwg show interfaces 2>/dev/null)$extra" -- "${COMP_WORDS[2]}") )
 		return
 	fi
 
@@ -58,7 +58,7 @@ _awg_completion() {
 	fi
 
 	if [[ ${COMP_WORDS[COMP_CWORD-1]} == peer ]]; then
-		COMPREPLY+=( $(compgen -W "$(wg show "${COMP_WORDS[2]}" peers 2>/dev/null)" -- "${COMP_WORDS[COMP_CWORD]}") )
+		COMPREPLY+=( $(compgen -W "$(lwg show "${COMP_WORDS[2]}" peers 2>/dev/null)" -- "${COMP_WORDS[COMP_CWORD]}") )
 		return
 	fi
 
