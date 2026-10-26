@@ -17,7 +17,7 @@ override_dh_auto_install-arch:
 	$(MAKE) -C src DESTDIR=../debian/amneziawg-tools $(AMNEZIAWG_ARGS) install
 
 override_dh_fixperms:
-	dh_fixperms -Xetc/amnezia
+	dh_fixperms -Xetc/lunovpn
 
 override_dh_installexamples:
 	dh_installexamples -Xexternal-tests
