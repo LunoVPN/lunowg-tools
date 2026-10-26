@@ -8,19 +8,19 @@ LEFT_GW="10.0.5.1/24"
 LEFT_PORT=3001
 LEFT_INT="10.0.1.1/24"
 WG_LEFT_INTERFACE="wg_left"
-WG_LEFT_INTERFACE_CONF="/etc/wireguard/${WG_LEFT_INTERFACE}.conf"
+WG_LEFT_INTERFACE_CONF="/etc/lunovpn/wg/${WG_LEFT_INTERFACE}.conf"
 
 RIGHT_NS="right_ns"
 RIGHT_GW="10.0.5.2/24"
 RIGHT_PORT=3002
 RIGHT_INT="10.0.1.2/24"
 WG_RIGHT_INTERFACE="wg_right"
-WG_RIGHT_INTERFACE_CONF="/etc/wireguard/${WG_RIGHT_INTERFACE}.conf"
+WG_RIGHT_INTERFACE_CONF="/etc/lunovpn/wg/${WG_RIGHT_INTERFACE}.conf"
 
 cleanup() {
     if [ $? -ne 0 ]; then
         echo "Some test failed, here is some debugging"
-        dmesg -T | grep wireguard
+        dmesg -T | grep -E "lunovpn|wireguard"
     fi
     rm -f "${WG_LEFT_INTERFACE_CONF}" "${WG_RIGHT_INTERFACE_CONF}"
     ip netns delete "${LEFT_NS}" &>/dev/null
@@ -33,10 +33,10 @@ trap cleanup EXIT
 setup() {
     umask 0077
     echo "Generating keys"
-    LEFT_PRIVKEY="$(wg genkey)"
-    RIGHT_PRIVKEY="$(wg genkey)"
-    LEFT_PUBKEY="$(wg pubkey <<<"${LEFT_PRIVKEY}")"
-    RIGHT_PUBKEY="$(wg pubkey <<<"${RIGHT_PRIVKEY}")"
+    LEFT_PRIVKEY="$(lwg genkey)"
+    RIGHT_PRIVKEY="$(lwg genkey)"
+    LEFT_PUBKEY="$(lwg pubkey <<<"${LEFT_PRIVKEY}")"
+    RIGHT_PUBKEY="$(lwg pubkey <<<"${RIGHT_PRIVKEY}")"
 
     echo "Generating wireguard config"
     cat > "${WG_LEFT_INTERFACE_CONF}" <<-EOF
@@ -83,28 +83,30 @@ setup() {
     ip -n "${RIGHT_NS}" link set p2 up
 
     echo "Bringing up LEFT wireguard interface in namespace ${LEFT_NS}"
-    ip netns exec "${LEFT_NS}" wg-quick up "${WG_LEFT_INTERFACE}"
+    ip netns exec "${LEFT_NS}" lwg-quick up "${WG_LEFT_INTERFACE}"
 
     echo "Bringing up RIGHT wireguard interface in namespace ${RIGHT_NS}"
-    ip netns exec "${RIGHT_NS}" wg-quick up "${WG_RIGHT_INTERFACE}"
+    ip netns exec "${RIGHT_NS}" lwg-quick up "${WG_RIGHT_INTERFACE}"
 }
 
 show_config() {
     echo "${LEFT_NS} namespace:"
-    ip netns exec "${LEFT_NS}" wg showconf "${WG_LEFT_INTERFACE}"
+    ip netns exec "${LEFT_NS}" lwg showconf "${WG_LEFT_INTERFACE}"
     echo
     echo "${RIGHT_NS} namespace:"
-    ip netns exec "${RIGHT_NS}" wg showconf "${WG_RIGHT_INTERFACE}"
+    ip netns exec "${RIGHT_NS}" lwg showconf "${WG_RIGHT_INTERFACE}"
 }
 
 test_stats() {
     local -i ret
-    local output=""
+    local entry="" iface="" line="" ns="" output="" rx=0 tx=0
     # to be run after the ping tests
-    # by now, we MUST have "transfer" and "last handshake"
-    for ns in "${LEFT_NS}" "${RIGHT_NS}"; do
+    # by now, we MUST have "last handshake" and non-zero transfer counters
+    for entry in "${LEFT_NS}:${WG_LEFT_INTERFACE}" "${RIGHT_NS}:${WG_RIGHT_INTERFACE}"; do
+        ns="${entry%%:*}"
+        iface="${entry#*:}"
         echo "Namespace ${ns}"
-        output=$(ip netns exec "${ns}" wg show)
+        output=$(ip netns exec "${ns}" lwg show)
         echo "${output}" | grep -E "latest handshake:" || {
             ret=$?
             echo "Missing \"latest handshake\" from stats in namespace ${ns}"
@@ -112,13 +114,16 @@ test_stats() {
             echo "${output}"
             return $ret
         }
-        echo "${output}" | grep -E "transfer:.*received.*sent" || {
-            ret=$?
-            echo "Missing \"transfer\" stats in namespace ${ns}"
-            echo "Got this output:"
-            echo "${output}"
-            return $ret
-        }
+        # lwg show hides the transfer line, so read the counters from the transfer sub-command
+        line=$(ip netns exec "${ns}" lwg show "${iface}" transfer)
+        read -r _ rx tx <<<"${line}" || true
+        if ((rx > 0 && tx > 0)); then
+            continue
+        fi
+        echo "Missing non-zero transfer counters in namespace ${ns}"
+        echo "Got this output:"
+        echo "${line}"
+        return 1
     done
 }
 
