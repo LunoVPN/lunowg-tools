@@ -1,10 +1,10 @@
-.TH WG-QUICK 8 "2016 January 1" ZX2C4 "WireGuard"
+.TH LWG-QUICK 8 "2016 January 1" ZX2C4 "WireGuard"
 
 .SH NAME
-wg-quick - set up a WireGuard interface simply
+lwg-quick - set up a WireGuard interface simply
 
 .SH SYNOPSIS
-.B wg-quick
+.B lwg-quick
 [
 .I up
 |
@@ -31,23 +31,23 @@ optionally saves the current configuration, removes the WireGuard interface, and
 runs pre/post down scripts. Running \fIsave\fP saves the configuration of an existing
 interface without bringing the interface down. Use \fIstrip\fP to output a configuration file
 with all
-.BR wg-quick (8)-specific
+.BR lwg-quick (8)-specific
 options removed, suitable for use with
-.BR wg (8).
+.BR lwg (8).
 
 \fICONFIG_FILE\fP is a configuration file, whose filename is the interface name
 followed by `.conf'. Otherwise, \fIINTERFACE\fP is an interface name, with configuration
-found at `/etc/wireguard/\fIINTERFACE\fP.conf', searched first, followed by distro-specific
+found at `/etc/lunovpn/wg/\fIINTERFACE\fP.conf', searched first, followed by distro-specific
 search paths.
 
 Generally speaking, this utility is just a simple script that wraps invocations to
-.BR wg (8)
+.BR lwg (8)
 and
 .BR ip (8)
 in order to set up a WireGuard interface. It is designed for users with simple
 needs, and users with more advanced needs are highly encouraged to use a more
 specific tool, a more complete network manager, or otherwise just use
-.BR wg (8)
+.BR lwg (8)
 and
 .BR ip (8),
 as usual.
@@ -55,10 +55,10 @@ as usual.
 .SH CONFIGURATION
 
 The configuration file adds a few extra configuration values to the format understood by
-.BR wg (8)
+.BR lwg (8)
 in order to configure additional attributes of an interface. It handles the
 values that it understands, and then it passes the remaining ones directly to
-.BR wg (8)
+.BR lwg (8)
 for further processing.
 
 It infers all routes from the list of peers' allowed IPs, and automatically adds
@@ -67,7 +67,7 @@ them to the system routing table. If one of those routes is the default route
 .BR ip-rule (8)
 to handle overriding of the default gateway.
 
-The configuration file will be passed directly to \fBwg\fP(8)'s `setconf'
+The configuration file will be passed directly to \fBlwg\fP(8)'s `setconf'
 sub-command, with the exception of the following additions to the \fIInterface\fP section,
 which are handled by this tool:
 
@@ -113,9 +113,9 @@ somehow desirable.
 .SH EXAMPLES
 
 These examples draw on the same syntax found for
-.BR wg (8),
+.BR lwg (8),
 and a more complete description may be found there. Bold lines below are for options that extend
-.BR wg (8).
+.BR lwg (8).
 
 The following might be used for connecting as a client to a VPN gateway for tunneling all
 traffic:
@@ -151,15 +151,15 @@ Building on the last example, one might attempt the so-called ``kill-switch'', i
 to prevent the flow of unencrypted packets through the non-WireGuard interfaces, by adding the following
 two lines `PostUp` and `PreDown` lines to the `[Interface]` section:
 
-    \fBPostUp = iptables -I OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT\fP
+    \fBPostUp = iptables -I OUTPUT ! -o %i -m mark ! --mark $(lwg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT\fP
 .br
-    \fBPreDown = iptables -D OUTPUT ! -o %i -m mark ! --mark $(wg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT\fP
+    \fBPreDown = iptables -D OUTPUT ! -o %i -m mark ! --mark $(lwg show %i fwmark) -m addrtype ! --dst-type LOCAL -j REJECT\fP
 .br
 
 The `PostUp' and `PreDown' fields have been added to specify an
 .BR iptables (8)
 command which, when used with interfaces that have a peer that specifies 0.0.0.0/0 as part of the
-`AllowedIPs', works together with wg-quick's fwmark usage in order to drop all packets that
+`AllowedIPs', works together with lwg-quick's fwmark usage in order to drop all packets that
 are either not coming out of the tunnel encrypted or not going through the tunnel itself. (Note
 that this continues to allow most DHCP traffic through, since most DHCP clients make use of PF_PACKET
 sockets, which bypass Netfilter.) When IPv6 is in use, additional similar lines could be added using
@@ -168,7 +168,7 @@ sockets, which bypass Netfilter.) When IPv6 is in use, additional similar lines 
 Or, perhaps it is desirable to store private keys in encrypted form, such as through use of
 .BR pass (1):
 
-    \fBPreUp = wg set %i private-key <(pass WireGuard/private-keys/%i)\fP
+    \fBPreUp = lwg set %i private-key <(pass WireGuard/private-keys/%i)\fP
 .br
 
 For use on a server, the following is a more complicated example involving multiple peers:
@@ -242,22 +242,22 @@ through the tunnel:
 These configuration files may be placed in any directory, putting the desired interface name
 in the filename:
 
-\fB    # wg-quick up /path/to/wgnet0.conf\fP
+\fB    # lwg-quick up /path/to/wgnet0.conf\fP
 
 For convenience, if only an interface name is supplied, it automatically chooses a path in
-`/etc/wireguard/':
+`/etc/lunovpn/wg/':
 
-\fB    # wg-quick up wgnet0\fP
+\fB    # lwg-quick up wgnet0\fP
 
-This will load the configuration file `/etc/wireguard/wgnet0.conf'.
+This will load the configuration file `/etc/lunovpn/wg/wgnet0.conf'.
 
 The \fIstrip\fP command is useful for reloading configuration files without disrupting active
 sessions:
 
-\fB    # wg syncconf wgnet0 <(wg-quick strip wgnet0)\fP
+\fB    # lwg syncconf wgnet0 <(lwg-quick strip wgnet0)\fP
 
 .SH SEE ALSO
-.BR wg (8),
+.BR lwg (8),
 .BR ip (8),
 .BR ip-link (8),
 .BR ip-address (8),
@@ -266,7 +266,7 @@ sessions:
 .BR resolvconf (8).
 
 .SH AUTHOR
-.B wg-quick
+.B lwg-quick
 was written by
 .MT Jason@zx2c4.com
 Jason A. Donenfeld

@@ -6,9 +6,9 @@
   <string>com.wireguard.wg0</string>
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/local/bin/wg-quick</string>
+    <string>/usr/local/bin/lwg-quick</string>
     <string>up</string>
-    <string>/usr/local/etc/wireguard/wg0.conf</string>
+    <string>/usr/local/etc/lunovpn/wg/wg0.conf</string>
   </array>
   <key>OnDemand</key>
   <false/>

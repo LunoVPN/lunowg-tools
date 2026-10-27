@@ -1,8 +1,8 @@
-wg(8) and wg-quick(8) syntax highlighter library
+lwg(8) and lwg-quick(8) syntax highlighter library
 ================================================
 
-highlighter.c contains a simple portable highlighter for the wg(8) and
-wg-quick(8) configuration files. Simply copy `highlight.c` and
+highlighter.c contains a simple portable highlighter for the lwg(8) and
+lwg-quick(8) configuration files. Simply copy `highlight.c` and
 `highlight.h` into your project wholesale.
 
 As a demo, a simple console highlighter program is included, alongside a

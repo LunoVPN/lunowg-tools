@@ -8,11 +8,11 @@ set -e
 echo "[!] Warning: This server is for testing purposes only. You may not use this server for abusive or illegal purposes."
 
 echo "[+] Generating private key."
-privatekey="$(wg genkey)"
+privatekey="$(lwg genkey)"
 
 echo "[+] Sending public key to server."
 exec 7<>/dev/tcp/demo.wireguard.com/42912
-wg pubkey <<<"$privatekey" >&7
+lwg pubkey <<<"$privatekey" >&7
 
 echo "[+] Parsing server response."
 IFS=: read -r status server_pubkey server_port internal_ip <&7
@@ -20,7 +20,7 @@ IFS=: read -r status server_pubkey server_port internal_ip <&7
 
 echo "[+] Writing config file."
 [[ $UID -eq 0 ]] || sudo=sudo
-$sudo sh -c 'umask 077; mkdir -p /etc/wireguard; cat > /etc/wireguard/demo.conf' <<_EOF
+$sudo sh -c 'umask 077; mkdir -p /etc/lunovpn/wg; cat > /etc/lunovpn/wg/demo.conf' <<_EOF
 [Interface]
 PrivateKey = $privatekey
 Address = $internal_ip/24
@@ -32,4 +32,4 @@ Endpoint = demo.wireguard.com:$server_port
 AllowedIPs = 0.0.0.0/0
 _EOF
 
-echo "[+] Success. Run \`wg-quick up demo\` to turn on the tunnel to the demo server and \`wg-quick down demo\` to turn it off."
+echo "[+] Success. Run \`lwg-quick up demo\` to turn on the tunnel to the demo server and \`lwg-quick down demo\` to turn it off."

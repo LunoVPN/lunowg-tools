@@ -64,7 +64,7 @@ static void read_peers(const char *interface)
 	char full_cmd[2048] = { 0 };
 	size_t len;
 	FILE *f;
-	snprintf(full_cmd, 2047, "wg show %s peers", interface);
+	snprintf(full_cmd, 2047, "lwg show %s peers", interface);
 	f = popen(full_cmd, "r");
 	if (!f) {
 		perror("popen");
@@ -160,8 +160,8 @@ int main(int argc, char *argv[])
 	addr.sin_addr = *(struct in_addr *)ent->h_addr;
 	read_peers(interface);
 	cmd("ip link set %s up", interface);
-	unbase64(packet.my_pubkey, cmd("wg show %s public-key", interface));
-	packet.udp.source = htons(atoi(cmd("wg show %s listen-port", interface)));
+	unbase64(packet.my_pubkey, cmd("lwg show %s public-key", interface));
+	packet.udp.source = htons(atoi(cmd("lwg show %s listen-port", interface)));
 
 	/* We use raw sockets so that the WireGuard interface can actually own the real socket. */
 	sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
@@ -195,7 +195,7 @@ check_again:
 		} else {
 			printf("%s:%d\n", inet_ntoa(*(struct in_addr *)&reply.ip), ntohs(reply.port));
 			peers[i].have_seen = true;
-			cmd("wg set %s peer %s persistent-keepalive 25 endpoint %s:%d", interface, peers[i].base64_key, inet_ntoa(*(struct in_addr *)&reply.ip), ntohs(reply.port));
+			cmd("lwg set %s peer %s persistent-keepalive 25 endpoint %s:%d", interface, peers[i].base64_key, inet_ntoa(*(struct in_addr *)&reply.ip), ntohs(reply.port));
 		}
 	}
 	if (repeat) {
