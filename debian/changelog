@@ -1,3 +1,10 @@
+lunovpn (1.0.20210914-2) unstable; urgency=medium
+
+  * Rename source and binary packages from amneziawg to lunovpn so the
+    LunoVPN tools and kernel module packages share one name family.
+
+ -- LunoVPN <support@lunovpn.com>  Tue, 27 Oct 2026 06:20:00 +0000
+
 amneziawg (1.0.20210914-1ubuntu2) jammy; urgency=medium
 
   * Add better DEP8 tests (LP: #1952102):
