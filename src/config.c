@@ -452,7 +452,7 @@ static inline bool parse_uint16(uint16_t *device_value, const char *name, const 
 
 	if (*end || ret > UINT16_MAX) {
 		fprintf(stderr, "Unable to parse %s: `%s'\n", name, value);
-		exit(1);
+		return false;
 	}
 	*device_value = (uint16_t)ret;
 	return true;
@@ -484,7 +484,7 @@ static inline bool parse_bool(bool *device_value, const char *name, const char *
 
 	if (*end) {
 		fprintf(stderr, "Unable to parse %s: `%s'\n", name, value);
-		exit(1);
+		return false;
 	}
 	*device_value = ret != 0;
 	return true;
