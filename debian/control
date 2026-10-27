@@ -1,4 +1,4 @@
-Source: amneziawg
+Source: lunovpn
 Section: net
 Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
@@ -15,11 +15,11 @@ Vcs-Git: https://github.com/amnezia-vpn/amnezia-wg-tools.git
 Vcs-Browser: https://github.com/amnezia-vpn/amnezia-wg-tools
 Rules-Requires-Root: no
 
-Package: amneziawg
+Package: lunovpn
 Architecture: all
 Depends:
- amneziawg-dkms (>= 0.0.20200121-2) | amneziawg-modules (>= 0.0.20191219),
- amneziawg-tools (>= ${source:Version}),
+ lunovpn-dkms (>= 0.0.20200121-2) | lunovpn-modules (>= 0.0.20191219),
+ lunovpn-tools (>= ${source:Version}),
  ${misc:Depends},
 Description: fast, modern, secure kernel VPN tunnel (metapackage)
  WireGuard is a novel VPN that runs inside the Linux Kernel and uses
@@ -33,14 +33,14 @@ Description: fast, modern, secure kernel VPN tunnel (metapackage)
  This metapackage explicitly depends on both the kernel module and the
  userspace tooling.
 
-Package: amneziawg-tools
+Package: lunovpn-tools
 Architecture: linux-any
 Depends:
  ${misc:Depends},
  ${shlibs:Depends},
 Recommends:
  nftables | iptables,
- amneziawg-modules (>= 0.0.20171001) | amneziawg-dkms (>= 0.0.20191219),
+ lunovpn-modules (>= 0.0.20171001) | lunovpn-dkms (>= 0.0.20191219),
 Suggests: openresolv | resolvconf,
 Description: fast, modern, secure kernel VPN tunnel (userland utilities)
  WireGuard is a novel VPN that runs inside the Linux Kernel and uses

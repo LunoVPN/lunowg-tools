@@ -14,7 +14,7 @@ override_dh_auto_build-arch:
 	dh_auto_build --sourcedirectory=src -- $(AMNEZIAWG_ARGS)
 
 override_dh_auto_install-arch:
-	$(MAKE) -C src DESTDIR=../debian/amneziawg-tools $(AMNEZIAWG_ARGS) install
+	$(MAKE) -C src DESTDIR=../debian/lunovpn-tools $(AMNEZIAWG_ARGS) install
 
 override_dh_fixperms:
 	dh_fixperms -Xetc/amnezia
